@@ -6,6 +6,7 @@ namespace AdvancedTicketBot.Ticket {
     public class TicketInfoManager : Config {
         public List<TicketInfo> TicketInfos = new();
         public Dictionary<string, TicketInfo> InfoMap = new();
+        public Dictionary<string, Tuple<TicketInfo, CardTicketInfo>?> ReturnValMap = new();
 
         public TicketInfoManager(string path) : base(path) {
         }
@@ -22,8 +23,17 @@ namespace AdvancedTicketBot.Ticket {
                 if (this.InfoMap.ContainsKey(ticketInfo.Id)) {
                     Logger.Info($"以下id出现冲突，id不能相同：{ticketInfo.Id}");
                     Environment.Exit(-1);
-                } else
+                } else {
                     this.InfoMap[ticketInfo.Id] = ticketInfo;
+                    if (ticketInfo.Type != TicketInfoType.Card) continue;
+                    foreach (CardTicketInfo cardTicketInfo in ticketInfo.TicketInfos) {
+                        if (this.ReturnValMap.ContainsKey(cardTicketInfo.EventId)) {
+                            Logger.Info($"以下event-id出现冲突，event-id不能相同：{cardTicketInfo.EventId} from {ticketInfo.Id}");
+                            Environment.Exit(-1);
+                        } else
+                            this.ReturnValMap[cardTicketInfo.EventId] = new(ticketInfo, cardTicketInfo);
+                    }
+                }
         }
 
         public TicketInfo? GetTicketInfo(string id) {
@@ -39,11 +49,11 @@ namespace AdvancedTicketBot.Ticket {
             public string Command { init; get; }
             //Card：卡片标题。Command：开票标题
             public string Name { init; get; }
-            //Card：子开票标题。Command：无作用
-            public List<string> Title { init; get; }
+            //Card：子开票信息。Command：无作用
+            public List<CardTicketInfo> TicketInfos { init; get; }
             //开票频道所属分组Id，填0表示和触发频道放一起，填1表示放外面
             public ulong TicketCategoryId { init; get; }
-            //开票成功卡片显示内容
+            //Card：开票卡片备注。Command：开票成功卡片显示内容
             public string Content { init; get; }
             //Card：无作用。Command：可触发此指令的频道，填0表示不限制
             public ulong TriggerChannel { init; get; }
@@ -54,11 +64,20 @@ namespace AdvancedTicketBot.Ticket {
             //开票频道标题格式，可用占位符：%title%, %user_name%, %user_id%
             public string TitleFormat { init; get; }
             //可执行关闭开票的身份组，填0表示不限制
-            public uint CloseTicketRole { init; get; }
+            public List<uint> CloseTicketRole { init; get; }
 
             public string FormatTitle(string title, SocketUser user) {
                 return this.TitleFormat.Replace("%title%", title).Replace("%user_name%", user.Username).Replace("%user_id%", user.Id.ToString());
             }
+        }
+
+        public class CardTicketInfo {
+            //按钮内容
+            public string ButtonName { init; get; }
+            //按钮按下发送的返回值，不要重复
+            public string EventId { init; get; }
+            //开票成功卡片显示内容
+            public string Content { init; get; }
         }
 
         public enum TicketInfoType {
