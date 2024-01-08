@@ -35,7 +35,10 @@ namespace AdvancedTicketBot.Ticket {
                     }
                 }
         }
-
+        
+        /**
+         * 根据id获取TicketInfo对象
+         */
         public TicketInfo? GetTicketInfo(string id) {
             return this.InfoMap.TryGetValue(id, out TicketInfo? info) ? info : null;
         }

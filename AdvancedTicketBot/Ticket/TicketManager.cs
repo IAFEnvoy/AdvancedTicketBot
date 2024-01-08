@@ -19,7 +19,10 @@ namespace AdvancedTicketBot.Ticket {
             this.TicketsList = JsonSerializer.Deserialize<List<Tickets>>(sr.ReadToEnd(), optionIncludeFields) ?? new();
             sr.Close();
         }
-
+        
+        /**
+         * 添加开票
+         */
         public void AddTicket(ulong ownerId, ulong channelId, string infoId) {
             this.TicketsList.Add(new Tickets {
                 OwnerUserId = ownerId,
@@ -29,6 +32,9 @@ namespace AdvancedTicketBot.Ticket {
             this.Save();
         }
 
+        /**
+         * 根据频道id获取开票信息
+         */
         public Tickets? GetTicketChannel(ulong id) {
             List<Tickets> list = this.TicketsList.Where(x => x.TicketChannelId == id).ToList();
             return list.Count != 0 ? list[0] : null;

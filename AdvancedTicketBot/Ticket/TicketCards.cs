@@ -1,7 +1,7 @@
 ﻿using Kook;
 
 namespace AdvancedTicketBot.Ticket {
-    public static class TicketCards {
+    static internal class TicketCards {
         public static CardBuilder OpenTicketCard(string content) {
             return new CardBuilder().WithTheme(CardTheme.Primary).WithSize(CardSize.Large)
                 .AddModule(new HeaderModuleBuilder {

@@ -68,5 +68,18 @@
 ## 自行编译
 安装`.NET`6.0或者更高版本SDK后使用Rider或者Visual Studio打开，点击`运行/编译`即可
 
+## 作为SDK调用
+**以下内容用于将此开票系统内置到你自己的机器人**
+
+1.引用Release中的`AdvancedTicketBot.dll`或者自行编译得到的dll文件。
+
+2.创建`AdvancedTicketBot`实例
+```csharp
+AdvancedTicketBot ticketBot = new(false);
+```
+3.通过配置文件或者手动操作`ticketBot.TicketInfoManager`实例添加开票类型。
+
+4.在接收消息的地方调用`ticketBot.Client_MessageReceived`和`ticketBot.Client_MessageButtonClicked`即可。
+
 ## 贡献者
 暂无
