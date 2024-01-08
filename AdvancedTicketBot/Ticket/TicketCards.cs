@@ -3,7 +3,7 @@
 namespace AdvancedTicketBot.Ticket {
     public static class TicketCards {
         public static CardBuilder OpenTicketCard(string content) {
-            return new CardBuilder().WithTheme(CardTheme.Primary)
+            return new CardBuilder().WithTheme(CardTheme.Primary).WithSize(CardSize.Large)
                 .AddModule(new HeaderModuleBuilder {
                     Text = "服务器开票系统"
                 })

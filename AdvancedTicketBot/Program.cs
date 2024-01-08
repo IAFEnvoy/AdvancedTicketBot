@@ -48,16 +48,6 @@ namespace AdvancedTicketBot {
             Logger.Message($"<- TEXT {message.Author.Username} ({message.Author.Id}) [{message.Channel.Name}] {message.Content}");
             if (message.Content == "/ping") await message.AddReactionAsync(new Emoji("✅"));
             TicketManager.Tickets? tickets = TicketManager.GetTicketChannel(channel.Id);
-            //关票指令
-            if (tickets != null && message.Content == "/关") {
-                TicketInfoManager.TicketInfo? info = TicketInfoManager.GetTicketInfo(tickets.InfoId);
-                if (info != null && info.CloseTicketRole.Count!=0 && user.Roles.All(x => !info.CloseTicketRole.Contains(x.Id))) {
-                    await channel.SendTextAsync("你没有权限进行关票");
-                    return;
-                }
-                await channel.DeleteAsync();
-                return;
-            }
             //Card类开票
             foreach (TicketInfoManager.TicketInfo info in TicketInfoManager.TicketInfos.Where(x => x.Type == TicketInfoManager.TicketInfoType.Card))
                 if (message.Content == info.Command) {
@@ -97,6 +87,17 @@ namespace AdvancedTicketBot {
                     await channel.SendTextAsync($"已在(chn){ticketChannel.Id}(chn)完成开票");
                     return;
                 }
+            //关票指令
+            if (tickets != null && message.Content == "/关") {
+                await user.UpdateAsync();
+                TicketInfoManager.TicketInfo? info = TicketInfoManager.GetTicketInfo(tickets.InfoId);
+                if (info != null && info.CloseTicketRole.Count != 0 && user.Roles.All(x => !info.CloseTicketRole.Contains(x.Id))) {
+                    await channel.SendTextAsync("你没有权限进行关票");
+                    return;
+                }
+                await channel.DeleteAsync();
+                return;
+            }
         }
 
         private async Task Client_MessageButtonClicked(string value, Cacheable<SocketGuildUser, ulong> user, Cacheable<IMessage, Guid> message, SocketTextChannel channel) {
