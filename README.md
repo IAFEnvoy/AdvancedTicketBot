@@ -42,7 +42,9 @@
         //按钮按下发送的返回值，不要重复
         "EventId": "",
         //开票成功卡片显示内容
-        "Content": ""
+        "Content": "",
+        //可执行开票的身份组，留空表示不限制
+        "OpenTicketRole": []
       }
     ],
     //开票频道所属分组Id，填0表示和触发频道放一起，填1表示放外面
@@ -57,6 +59,8 @@
     "AllowAt": true,
     //开票频道标题格式，可用占位符：%title%, %user_name%, %user_id%
     "TitleFormat": "%title% %user_name% %user_id%",
+    //Card：无作用。Command：可执行开票的身份组，留空表示不限制
+    "OpenTicketRole": [],
     //可执行关闭开票的身份组，留空表示不限制
     "CloseTicketRole": []
   }

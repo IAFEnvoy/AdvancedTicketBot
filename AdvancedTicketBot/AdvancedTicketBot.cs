@@ -15,7 +15,7 @@ namespace AdvancedTicketBot {
             Logger.Info($"[{msg.Source}] {msg}");
             return Task.CompletedTask;
         }
-        
+
         /**
          * 创建机器人实例
          * 如果作为SDK调用需要将loadInternalBot参数设置为false
@@ -29,13 +29,13 @@ namespace AdvancedTicketBot {
             if (!this.loadInternalBot) return;
             Config.StartAutoSave();
         }
-        
+
         /**
          * 如果作为SDK调用不需要使用此方法
          */
         public async Task MainAsync() {
             if (!this.loadInternalBot) return;
-            
+
             this.client.Log += Log;
             this.client.MessageReceived += this.Client_MessageReceived;
             this.client.MessageButtonClicked += this.Client_MessageButtonClicked;
@@ -71,6 +71,11 @@ namespace AdvancedTicketBot {
             //Command类开票
             foreach (TicketInfoManager.TicketInfo info in TicketInfoManager.TicketInfos.Where(x => x.Type == TicketInfoManager.TicketInfoType.Command))
                 if (message.Content.StartsWith(info.Command) && (info.TriggerChannel == 0 || info.TriggerChannel == channel.Id)) {
+                    await user.UpdateAsync();
+                    if (info.OpenTicketRole.Count > 0 && user.Roles.Where(x => info.OpenTicketRole.Contains(x.Id)).ToList().Count == 0) {
+                        await channel.SendTextAsync("你没有开此类票的权限");
+                        continue;
+                    }
                     SocketCategoryChannel? category = channel.Category as SocketCategoryChannel;
                     if (info.TicketCategoryId == 1) category = null;
                     else if (info.TicketCategoryId != 0) category = this.client.GetChannel(info.TicketCategoryId) as SocketCategoryChannel;
@@ -97,8 +102,25 @@ namespace AdvancedTicketBot {
                     await channel.SendTextAsync($"已在(chn){ticketChannel.Id}(chn)完成开票");
                     return;
                 }
+            //添加用户
+            if (tickets != null && message.Content.StartsWith("添加")) {
+                await user.UpdateAsync();
+                TicketInfoManager.TicketInfo? info = TicketInfoManager.GetTicketInfo(tickets.InfoId);
+                if (info != null && info.CloseTicketRole.Count != 0 && user.Roles.All(x => !info.CloseTicketRole.Contains(x.Id))) {
+                    await channel.SendTextAsync("你没有权限添加用户");
+                    return;
+                }
+                IEnumerable<ulong> addUsers = message.Content.Split(" ").Where(x => ulong.TryParse(x, out ulong _)).Select(x => Convert.ToUInt64(x));
+                foreach (ulong kookId in addUsers)
+                    try {
+                        await channel.AddPermissionOverwriteAsync(channel.Guild.GetUser(kookId));
+                        await channel.ModifyPermissionOverwriteAsync(channel.Guild.GetUser(kookId), y => y.Modify(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow, attachFiles: PermValue.Allow));
+                    } catch (Exception) {
+                        // ignored
+                    }
+            }
             //关票指令
-            if (tickets != null && message.Content == "/关") {
+            if (tickets != null && message.Content == "关票") {
                 await user.UpdateAsync();
                 TicketInfoManager.TicketInfo? info = TicketInfoManager.GetTicketInfo(tickets.InfoId);
                 if (info != null && info.CloseTicketRole.Count != 0 && user.Roles.All(x => !info.CloseTicketRole.Contains(x.Id))) {
@@ -106,7 +128,6 @@ namespace AdvancedTicketBot {
                     return;
                 }
                 await channel.DeleteAsync();
-                return;
             }
         }
 
@@ -116,10 +137,15 @@ namespace AdvancedTicketBot {
         public async Task Client_MessageButtonClicked(string value, Cacheable<SocketGuildUser, ulong> user, Cacheable<IMessage, Guid> message, SocketTextChannel channel) {
             if (TicketInfoManager.ReturnValMap.TryGetValue(value, out Tuple<TicketInfoManager.TicketInfo, TicketInfoManager.CardTicketInfo>? info)) {
                 if (info == null) return;
+                await user.Value.UpdateAsync();
+                if (info.Item2.OpenTicketRole.Count > 0 && user.Value.Roles.Where(x => info.Item2.OpenTicketRole.Contains(x.Id)).ToList().Count == 0) {
+                    await channel.SendTextAsync("你没有开此类票的权限", ephemeralUser: user.Value);
+                    return;
+                }
                 SocketCategoryChannel? category = channel.Category as SocketCategoryChannel;
                 if (info.Item1.TicketCategoryId == 1) category = null;
                 else if (info.Item1.TicketCategoryId != 0) category = this.client.GetChannel(info.Item1.TicketCategoryId) as SocketCategoryChannel;
-                ITextChannel ticketChannel = await this.client.GetGuild(channel.Guild.Id).CreateTextChannelAsync(info.Item1.FormatTitle(info.Item2.Content, user.Value), x => x.CategoryId = category?.Id ?? null);
+                ITextChannel ticketChannel = await this.client.GetGuild(channel.Guild.Id).CreateTextChannelAsync(info.Item1.FormatTitle(info.Item2.ButtonName, user.Value), x => x.CategoryId = category?.Id ?? null);
                 TicketManager.AddTicket(user.Id, ticketChannel.Id, info.Item1.Id);
                 await ticketChannel.AddPermissionOverwriteAsync(user.Value);
                 await ticketChannel.ModifyPermissionOverwriteAsync(user.Value, x => x.Modify(viewChannel: PermValue.Allow, sendMessages: PermValue.Allow, attachFiles: PermValue.Allow));

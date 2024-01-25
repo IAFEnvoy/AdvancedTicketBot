@@ -40,6 +40,7 @@ namespace AdvancedTicketBot.Ticket {
             return list.Count != 0 ? list[0] : null;
         }
 
+#pragma warning disable CS8618
         public class Tickets {
             public ulong OwnerUserId { init; get; }
             public ulong TicketChannelId { init; get; }

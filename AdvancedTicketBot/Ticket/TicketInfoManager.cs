@@ -35,7 +35,7 @@ namespace AdvancedTicketBot.Ticket {
                     }
                 }
         }
-        
+
         /**
          * 根据id获取TicketInfo对象
          */
@@ -43,6 +43,9 @@ namespace AdvancedTicketBot.Ticket {
             return this.InfoMap.TryGetValue(id, out TicketInfo? info) ? info : null;
         }
 
+        // ReSharper disable UnusedAutoPropertyAccessor.Global
+        // ReSharper disable CollectionNeverUpdated.Global
+#pragma warning disable CS8618
         public class TicketInfo {
             //唯一Id
             public string Id { init; get; }
@@ -64,13 +67,15 @@ namespace AdvancedTicketBot.Ticket {
             public bool AtInTicket { init; get; }
             //Card：无作用。Command：将at的人也拉入开票频道
             public bool AllowAt { init; get; }
-            //开票频道标题格式，可用占位符：%title%, %user_name%, %user_id%
+            //开票频道标题格式，可用占位符：%title%, %user_name%, %user_id%, %display_name%
             public string TitleFormat { init; get; }
-            //可执行关闭开票的身份组，填0表示不限制
+            //Card：无作用。Command：可执行开票的身份组，留空表示不限制
+            public List<uint> OpenTicketRole { init; get; }
+            //可执行关闭开票的身份组，留空表示不限制
             public List<uint> CloseTicketRole { init; get; }
 
-            public string FormatTitle(string title, SocketUser user) {
-                return this.TitleFormat.Replace("%title%", title).Replace("%user_name%", user.Username).Replace("%user_id%", user.Id.ToString());
+            public string FormatTitle(string title, SocketGuildUser user) {
+                return this.TitleFormat.Replace("%title%", title).Replace("%user_name%", user.Username).Replace("%user_id%", user.Id.ToString()).Replace("%display_name%", user.DisplayName);
             }
         }
 
@@ -81,6 +86,8 @@ namespace AdvancedTicketBot.Ticket {
             public string EventId { init; get; }
             //开票成功卡片显示内容
             public string Content { init; get; }
+            //可执行开票的身份组，留空表示不限制
+            public List<uint> OpenTicketRole { init; get; }
         }
 
         public enum TicketInfoType {
